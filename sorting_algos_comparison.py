@@ -1,7 +1,6 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-
 # Define the sorting algorithms
 
 # Bubble Sort
@@ -151,33 +150,78 @@ def radix_sort(arr):
     while max1 // exp > 0:
         counting_sort_for_radix(arr, exp)
         exp *= 10
+        
+# Block Sort
+def block_sort(arr):
+    block_size = int(len(arr) ** 0.5)
+    blocks = [arr[i:i+block_size] for i in range(0, len(arr), block_size)]
+    sorted_blocks = [sorted(block) for block in blocks]
+    sorted_arr = [element for block in sorted_blocks for element in block]
+    return sorted_arr
 
-# Generate a random array
-np.random.seed(0)
-arr = np.random.randint(1, 100, size=100).tolist()
+def tim_sort(arr):
+    arr.sort()      #python's built-in sort function is TimSort
 
-# Measure the sorting times
-algorithms = {'Bubble Sort': bubble_sort, 
-              'Cocktail Shaker Sort': cocktail_shaker_sort,
-              'Insertion Sort': insertion_sort,
-              'Binary Insertion Sort': binary_insertion_sort,
-              'Selection Sort': selection_sort,
-              'Quick Sort': quick_sort,
-              'Merge Sort': merge_sort,
-              'Comb Sort': comb_sort,
-              'Radix Sort': radix_sort}
+def create_almost_sorted_array(size):
+    # Generate a sorted array
+    arr = np.sort(np.random.randint(-1000000000, 1000000000, size=size))
+    
+    # Introduce swaps to make the array 'almost sorted'
+    num_swaps = max(1, size // 100)  # Introduce swaps proportional to the size, at least 1
+    
+    for _ in range(num_swaps):
+        # Randomly choose two indices to swap
+        idx1, idx2 = np.random.choice(size, 2, replace=False)
+        # Swap elements
+        arr[idx1], arr[idx2] = arr[idx2], arr[idx1]
+    
+    return arr.tolist()
 
-times = {}
-for name, func in algorithms.items():
-    copy_arr = arr.copy()
-    start_time = time.time()
-    func(copy_arr)
-    end_time = time.time()
-    times[name] = end_time - start_time
+array_sizes = [50000, 100000, 200000, 300000, 400000, 500000, 600000, 700000]
 
-# Plot the comparison
-plt.bar(times.keys(), times.values(), color='skyblue')
-plt.ylabel('Time (seconds)')
-plt.title('Sorting Algorithm Performance')
-plt.xticks(rotation=45)
+# List of sorting algorithms
+algorithms = {
+    #'Bubble Sort': bubble_sort, 
+    #'Cocktail Shaker Sort': cocktail_shaker_sort,
+    #'Selection Sort': selection_sort,
+    #'Insertion Sort': insertion_sort,
+    #'Binary Insertion Sort': binary_insertion_sort,
+    'Quick Sort': quick_sort,
+    'Merge Sort': merge_sort,
+    'Comb Sort': comb_sort,
+    'Radix Sort': radix_sort,
+    'Block Sort': block_sort,
+    'Tim Sort': tim_sort
+}
+
+# Store the results
+time_results = {name: [] for name in algorithms.keys()}
+
+# Test each algorithm on each array size
+for size in array_sizes:
+    #arr = np.random.randint(-1000000000, 0, size=size).tolist() #negative integers
+    arr = np.random.randint(-1000000000, 1000000000, size=size).tolist() #normal integers
+    #arr = np.random.uniform(-1000000000, 1000000000, size=size).tolist() #floats
+    #arr = create_almost_sorted_array(size) #almost sorted array
+    #arr = np.sort(np.random.randint(-1000000000, 1000000000, size=size))[::-1].tolist() #reverse sorted array
+
+    for name, func in algorithms.items():
+        times = []
+        for _ in range(4):  # Run each size 4 times
+            copy_arr = arr.copy()
+            start_time = time.time()
+            func(copy_arr)
+            end_time = time.time()
+            times.append(end_time - start_time)
+        time_results[name].append(sum(times) / len(times))
+
+# Plotting time results
+plt.figure(figsize=(10, 5))
+for name, times in time_results.items():
+    plt.plot(array_sizes, times, label=name)
+plt.xlabel('Array Size')
+plt.ylabel('Average Running Time (s)')
+plt.title('Sorting Algorithm Performance on a Reverse Sorted Array')
+plt.legend()
+plt.grid(True)
 plt.show()
